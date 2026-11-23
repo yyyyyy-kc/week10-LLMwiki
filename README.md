@@ -21,7 +21,6 @@
 w10_wikiLLM/
 ├── AGENT.md                 # Agent 操作手冊與工作流定義 (The Schema)
 ├── presentation.html        # 獨立可瀏覽的教學 HTML 簡報 (零依賴單檔)
-├── SUBMISSION.md            # 作業繳交正式報告 (含 loop/graph、檢查紀錄與反思)
 ├── README.md                # 本說明文件
 ├── sources/                 # 不可變原始材料 (不可修改來源層)
 │   ├── week1/               # C02a, C02b, C02c (布林代數基礎、公理與邏輯閘)
