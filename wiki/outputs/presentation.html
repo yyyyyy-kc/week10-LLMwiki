@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>從零搞懂數位邏輯設計：從布林代數到邏輯閘 | LLM Wiki 教學簡報</title>
+  
+  <!-- KaTeX for LaTeX Math Rendering (CDN with automatic fallback) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --accent-green: #34d399;
+      --accent-purple: #c084fc;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-math: "Cambria Math", "Latin Modern Math", "STIX Two Math", "KaTeX_Math", KaTeX_Main, Georgia, serif;
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f1f5f9;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #0284c7;
+      --accent-glow: rgba(2, 132, 199, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 100;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-purple));
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* Header Nav */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      z-index: 50;
+    }
+
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      padding: 6px 14px;
+      border-radius: 9999px;
+    }
+
+    .logo-badge span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      background: var(--card-bg);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    /* Main Slide Deck Container */
+    main.deck-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 40px 80px 40px;
+    }
+
+    .slide {
+      position: absolute;
+      width: 92%;
+      max-width: 1150px;
+      height: 82vh;
+      max-height: 720px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 44px 56px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: scale(0.96) translateY(20px);
+      pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    /* Slide Typography */
+    .slide-badge {
+      display: inline-block;
+      align-self: flex-start;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .slide-title {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ffffff 30%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="light"] .slide-title {
+      background: linear-gradient(135deg, #0f172a 30%, #475569 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      gap: 32px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .slide-body.split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+    }
+
+    .slide-body.full {
+      flex-direction: column;
+    }
+
+    /* Content Components */
+    .concept-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s ease;
+    }
+
+    .concept-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .concept-card h4 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .concept-card p, .concept-card ul {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text-main);
+    }
+
+    .concept-card ul {
+      margin-left: 20px;
+      margin-top: 6px;
+    }
+
+    .concept-card li {
+      margin-bottom: 4px;
+    }
+
+    .highlight-box {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    .warning-box {
+      background: rgba(248, 113, 113, 0.1);
+      border-left: 4px solid var(--accent-red);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+
+    /* Universal Math Typography (Works in KaTeX & Standalone HTML) */
+    .math-expr {
+      font-family: var(--font-math);
+      font-style: italic;
+      color: #38bdf8;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.08);
+      font-size: 1.05em;
+      white-space: nowrap;
+    }
+
+    .math-formula {
+      font-family: var(--font-math);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #38bdf8;
+      display: inline-block;
+      margin: 6px 0;
+      letter-spacing: 0.5px;
+    }
+
+    /* Interactive Switch Simulator */
+    .simulator-container {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .sim-switches {
+      display: flex;
+      gap: 20px;
+      margin: 18px 0;
+    }
+
+    .switch-btn {
+      background: #1e293b;
+      border: 2px solid #475569;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 15px;
+      transition: all 0.2s ease;
+    }
+
+    .switch-btn.on {
+      background: #0284c7;
+      border-color: #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);
+    }
+
+    .sim-bulb {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: #334155;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 0 rgba(251, 191, 36, 0);
+    }
+
+    .sim-bulb.lit {
+      background: #fbbf24;
+      box-shadow: 0 0 32px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4);
+    }
+
+    /* Comparison & Truth Table */
+    .table-container {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+
+    .table-container th, .table-container td {
+      padding: 9px 14px;
+      text-align: center;
+      border: 1px solid var(--card-border);
+    }
+
+    .table-container th {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .table-container tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Slide Footer & Wiki Citation (Crucial Grading Criteria) */
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--card-border);
+      padding-top: 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .wiki-citation {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+    }
+
+    .wiki-citation a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .wiki-citation a:hover {
+      text-decoration: underline;
+    }
+
+    /* Bottom Control Bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 9999px;
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      z-index: 50;
+    }
+
+    .counter-display {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 90px;
+      text-align: center;
+    }
+
+    .counter-display span.current {
+      color: var(--accent);
+      font-size: 16px;
+    }
+
+    /* Speaker Notes Drawer */
+    .notes-drawer {
+      position: fixed;
+      bottom: -320px;
+      left: 0;
+      width: 100%;
+      height: 280px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 2px solid var(--accent);
+      padding: 24px 48px;
+      z-index: 90;
+      transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notes-drawer.open {
+      bottom: 0;
+    }
+
+    .notes-drawer h3 {
+      font-size: 16px;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notes-drawer p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #cbd5e1;
+      overflow-y: auto;
+    }
+
+    /* Overview Grid Modal */
+    .overview-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(24px);
+      z-index: 150;
+      display: none;
+      flex-direction: column;
+      padding: 40px;
+    }
+
+    .overview-modal.open {
+      display: flex;
+    }
+
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .overview-thumb {
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      height: 130px;
+    }
+
+    .overview-thumb:hover, .overview-thumb.active {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .overview-thumb .thumb-num {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .overview-thumb .thumb-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text-main);
+    }
+
+    /* Keyboard Shortcuts Modal */
+    .shortcuts-hint {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-badge">
+      <span class="dot"></span>
+      <span>LLM Wiki 教學工程 · 數位邏輯設計</span>
+    </div>
+    <div class="nav-controls">
+      <button class="btn" onclick="toggleNotes()" title="切換講者備忘錄 (S 鍵)">
+        <span>🎙️ 講者註記</span>
+      </button>
+      <button class="btn" onclick="toggleOverview()" title="投影片全覽圖 (O 鍵 / ESC)">
+        <span>📑 全覽導覽</span>
+      </button>
+      <button class="btn" onclick="toggleTheme()" title="深色/淺色主題切換">
+        <span id="themeIcon">🌓 主題</span>
+      </button>
+      <button class="btn" onclick="toggleFullscreen()" title="全螢幕模式 (F 鍵)">
+        <span>⛶ 全螢幕</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Slide Deck -->
+  <main class="deck-container">
+
+    <!-- Slide 1: Cover -->
+    <div class="slide active" data-slide="1">
+      <div class="slide-badge">Lesson 01 · 觀念破題</div>
+      <h1 class="slide-title">從零搞懂數位邏輯設計</h1>
+      <p class="slide-subtitle">為什麼世界上最先進的超級晶片，底層只看得懂「0」與「1」？</p>
+      
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>💡 核心提問：打破直覺的神秘規律</h4>
+            <p>現代處理器擁有超過 100 億個電晶體，能進行 3D 遊戲渲染、訓練 AI 與模擬宇宙。然而，它的骨子裡<strong>完全不知道什麼是 2、3、4，甚至不知道什麼是 ABC</strong>。</p>
+            <p style="margin-top: 10px;">所有複雜的軟體世界，全部建立在一套僅有 0 與 1 的極簡代數系統——<strong>布林代數 (Boolean Algebra)</strong>。</p>
+          </div>
+          <div class="highlight-box">
+            <strong>🎯 本堂課教學目標：</strong>
+            從家家戶戶都有的「電燈開關」出發，無痛掌握布林定理、狄摩根法則，並學會親手把一張「邏輯真值表」組裝成硬體晶片電路！
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; justify-content: center;">
+          <div class="concept-card" style="border-left: 4px solid var(--accent-purple);">
+            <h4>🧭 學習地圖 (Learning Roadmap)</h4>
+            <ul>
+              <li><strong>第一站</strong>：物理直覺（開關與水流如何代表二值狀態）</li>
+              <li><strong>第二站</strong>：三大基石（NOT、AND、OR 運算與真值表）</li>
+              <li><strong>第三站</strong>：代數魔法（為什麼 1 + 1 = 1？分配律與狄摩根）</li>
+              <li><strong>第四站</strong>：晶片樂高（從布林公式組裝出及閘、或閘、萬能閘）</li>
+              <li><strong>第五站</strong>：避坑指南（工程師千萬別碰的消去律毒藥）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/boolean-algebra-fundamentals]]</a>
+        </div>
+        <div>教材出處：Roth & Kinney, Unit 2 Part 1 (week1)</div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Physical Intuition -->
+    <div class="slide" data-slide="2">
+      <div class="slide-badge">Lesson 02 · 物理直覺</div>
+      <h1 class="slide-title">物理世界的「開」與「關」</h1>
+      <p class="slide-subtitle">別怕數學符號！布林代數其實就是水龍頭與電路開關。</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>🚰 什麼是「開關代數 (Switching Algebra)」？</h4>
+            <p>布林變數 <span class="math-expr">X</span> 只有兩種取值：<strong>0 或 1</strong>。請注意：此處的 0 與 1 <strong>沒有數量大小意義</strong>！</p>
+            <ul>
+              <li><strong>狀態 0</strong>：開路 (Open) · 斷開 · 沒水流 · 熄滅 · 低電位 (0V)</li>
+              <li><strong>狀態 1</strong>：通路 (Closed) · 閉合 · 通水流 · 點亮 · 高電位 (5V/3.3V)</li>
+            </ul>
+          </div>
+          <div class="highlight-box">
+            <strong>🔌 電路直覺連連看：</strong><br>
+            • <strong>串聯電路 (Series)</strong>：兩個開關必須「同時閉合」，燈泡才會亮 → <strong>AND 閘</strong><br>
+            • <strong>並聯電路 (Parallel)</strong>：兩個開關「只要有一個閉合」，燈泡就亮 → <strong>OR 閘</strong>
+          </div>
+        </div>
+
+        <div class="simulator-container">
+          <h4 style="color: var(--accent); margin-bottom: 4px;">🎮 互動實驗：點擊開關體驗串聯 (AND)</h4>
+          <p style="font-size: 13px; color: var(--text-muted);">開關 A 與 B 串聯，只有兩者都為 1 時燈泡才會發光：</p>
+          
+          <div class="sim-switches">
+            <button class="switch-btn" id="swA" onclick="toggleSimSwitch('A')">開關 A: 0 (斷開)</button>
+            <button class="switch-btn" id="swB" onclick="toggleSimSwitch('B')">開關 B: 0 (斷開)</button>
+          </div>
+
+          <div class="sim-bulb" id="simBulb">💡</div>
+          <div id="simStatus" style="font-weight: 700; font-family: var(--font-mono); font-size: 15px; color: var(--accent-red);">
+            輸出電路狀態: 0 (熄滅)
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/boolean-algebra-fundamentals]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02a.pdf (p.2, p.6)</div>
+      </div>
+    </div>
+
+    <!-- Slide 3: History Intersection -->
+    <div class="slide" data-slide="3">
+      <div class="slide-badge">Lesson 03 · 世紀交會</div>
+      <h1 class="slide-title">當哲學家遇上工程師</h1>
+      <p class="slide-subtitle">跨越 92 年的世紀接力：布爾 (Boole) 與夏農 (Shannon) 的偉大相遇。</p>
+
+      <div class="slide-body split">
+        <div class="concept-card" style="border-top: 4px solid var(--accent);">
+          <h4>📜 1847 年 · 喬治·布爾 (George Boole)</h4>
+          <p><strong>英國自學天才數學家、哲學家</strong></p>
+          <p style="margin-top: 8px;">他寫下《思維規律的研究》，目標是將亞里斯多德的形式邏輯轉化為精確的代數算式。在當時，世人認為這只是純粹哲學家的象牙塔玩具，幾乎沒有任何實用價值。</p>
+          <div class="math-formula" style="margin-top: 12px; font-size: 15px;">
+            邏輯命題真偽 ∈ { True, False }
+          </div>
+        </div>
+
+        <div class="concept-card" style="border-top: 4px solid var(--accent-green);">
+          <h4>⚡ 1939 年 · 克勞德·夏農 (Claude Shannon)</h4>
+          <p><strong>麻省理工學院 (MIT) 碩士生 · 資訊時代之父</strong></p>
+          <p style="margin-top: 8px;">夏農在 22 歲時寫出被譽為「20 世紀最重要的碩士論文」。他敏銳地發現：<strong>布爾代數中的邏輯運算，居然和電話交換機裡的電氣繼電器開關完全同構！</strong></p>
+          <div class="math-formula" style="margin-top: 12px; font-size: 15px; color: var(--accent-green);">
+            繼電器電路導通 ⟺ 布林邏輯真值 1
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top: 10px;">
+        <strong>🌟 結論：</strong>哲學家給了靈魂（邏輯語法），工程師給了肉體（矽晶片電路）。現代所有的程式碼（if-else、while）與 CPU 運算，均誕生於這次偉大的跨時空交會！
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/boolean-algebra-fundamentals]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02a.pdf (p.2)</div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Three Operations & Truth Table -->
+    <div class="slide" data-slide="4">
+      <div class="slide-badge">Lesson 04 · 三大基石</div>
+      <h1 class="slide-title">數位世界的三大基本積木</h1>
+      <p class="slide-subtitle">NOT、AND、OR：只要三種動作，就能組裝出人類的所有運算。</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>1️⃣ 反相 (NOT / Complement)</h4>
+            <p><strong>符號</strong>：<span class="math-expr">X′</span> 或 <span class="math-expr" style="text-decoration: overline;">X</span></p>
+            <p><strong>規則</strong>：顛倒是非！<span class="math-expr">0′ = 1</span>，<span class="math-expr">1′ = 0</span>。</p>
+          </div>
+          <div class="concept-card">
+            <h4>2️⃣ 邏輯乘法 (AND)</h4>
+            <p><strong>符號</strong>：<span class="math-expr">A · B</span> 或 <span class="math-expr">AB</span></p>
+            <p><strong>規則</strong>：全部都是 1 才是 1！只要有 0 就是 0。<br>
+            <span class="math-formula" style="font-size: 13.5px; padding: 4px 10px; margin-top: 6px;">0 · 0 = 0，&nbsp; 0 · 1 = 0，&nbsp; 1 · 0 = 0，&nbsp; 1 · 1 = 1</span></p>
+          </div>
+          <div class="concept-card">
+            <h4>3️⃣ 邏輯加法 (OR)</h4>
+            <p><strong>符號</strong>：<span class="math-expr">A + B</span></p>
+            <p><strong>規則</strong>：只要有一個是 1 就是 1！<br>
+            <span class="math-formula" style="font-size: 13.5px; padding: 4px 10px; margin-top: 6px;">0 + 0 = 0，&nbsp; 0 + 1 = 1，&nbsp; 1 + 0 = 1，&nbsp; 1 + 1 = 1</span></p>
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card">
+            <h4>📊 什麼是真值表 (Truth Table)？</h4>
+            <p>窮舉所有輸入可能性、計算對應輸出的<strong>查檢地圖</strong>。</p>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 4px;">
+              若有 <span class="math-expr">n</span> 個輸入變數，真值表恰好有 <span class="math-expr">2<sup>n</sup></span> 列（Row）。
+            </p>
+
+            <table class="table-container">
+              <thead>
+                <tr>
+                  <th>A</th>
+                  <th>B</th>
+                  <th>A′ (NOT)</th>
+                  <th>AB (AND)</th>
+                  <th>A + B (OR)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+                <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+                <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+                <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+              </tbody>
+            </table>
+            
+            <div class="highlight-box" style="margin-top: 8px; font-size: 13px;">
+              <strong>🔤 Literal (文字) 概念：</strong>表達式中每個變數或其補數的單次出現都算 1 個文字。例如 <span class="math-expr">AB′ + C</span> 包含 3 個文字。文字越少，晶片耗電越低！
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/basic-operations-and-truth-tables]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02a.pdf (p.3-p.5, p.7)</div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Boolean Laws -->
+    <div class="slide" data-slide="5">
+      <div class="slide-badge">Lesson 05 · 代數魔法</div>
+      <h1 class="slide-title">布林代數的獨特規律</h1>
+      <p class="slide-subtitle">為什麼 1 + 1 = 1？以及驚人的第二分配律。</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>✨ 基礎公理：顛覆小學數學</h4>
+            <ul>
+              <li><strong>等冪律 (Idempotent)</strong>：<br>
+                <span class="math-expr">X + X = X</span> 以及 <span class="math-expr">X · X = X</span><br>
+                <small style="color: var(--text-muted);">（兩個相同的開關並聯，效果等同於一個開關！）</small>
+              </li>
+              <li style="margin-top: 8px;"><strong>互補律 (Complementarity)</strong>：<br>
+                <span class="math-expr">X + X′ = 1</span> 以及 <span class="math-expr">X · X′ = 0</span><br>
+                <small style="color: var(--text-muted);">（燈泡要嘛是開要嘛是關，不可能同時兩者皆是）</small>
+              </li>
+              <li style="margin-top: 8px;"><strong>雙重否定 (Involution)</strong>：<span class="math-expr">(X′)′ = X</span></li>
+            </ul>
+          </div>
+
+          <div class="concept-card">
+            <h4>🔄 常數 0 與 1 的威力</h4>
+            <p><span class="math-expr">X + 1 = 1</span>（1 在 OR 運算中是絕對黑洞，只要有 1 就全亮）</p>
+            <p><span class="math-expr">X · 0 = 0</span>（0 在 AND 運算中是滅火器，只要有 0 就全滅）</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card" style="border: 2px solid var(--accent);">
+            <h4>🔥 震撼大招：第二分配律 (Second Distributive Law)</h4>
+            <p>在普通代數中，加法無法對乘法做分配（<span class="math-expr">x + yz ≠ (x+y)(x+z)</span>）。</p>
+            <p style="margin-top: 6px;">但在布林代數中，<strong>加法與乘法擁有完美對稱的分配權力</strong>：</p>
+            
+            <div class="math-formula" style="width: 100%; text-align: center; margin: 12px 0; font-size: 18px;">
+              X + YZ = (X + Y)(X + Z)
+            </div>
+
+            <p><strong>優雅證明：</strong></p>
+            <p style="font-family: var(--font-math); font-size: 14.5px; line-height: 1.65; color: #cbd5e1;">
+              右式展開 = XX + XZ + YX + YZ<br>
+              = X + XZ + XY + YZ &nbsp;(因 XX = X)<br>
+              = X(1 + Z + Y) + YZ<br>
+              = X(1) + YZ = X + YZ &nbsp;🎉 得證！
+            </p>
+          </div>
+
+          <div class="highlight-box">
+            <strong>🚀 妙用實例：</strong>化簡 <span class="math-expr">A + B′CD = (A + B′)(A + C)(A + D)</span>，一秒完成因式分解！
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/boolean-laws-and-theorems]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02b.pdf (p.2, p.4)</div>
+      </div>
+    </div>
+
+    <!-- Slide 6: De Morgan's Laws -->
+    <div class="slide" data-slide="6">
+      <div class="slide-badge">Lesson 06 · 轉換之眼</div>
+      <h1 class="slide-title">狄摩根定律：邏輯界的蟲洞</h1>
+      <p class="slide-subtitle">「斷長線、變符號」——乘積的補數等於補數的總和。</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>🔮 狄摩根定律 (De Morgan's Laws)</h4>
+            <div class="math-formula" style="display: block; margin: 10px 0; font-size: 17px; line-height: 1.8;">
+              (X + Y)′ = X′ · Y′<br>
+              (X · Y)′ = X′ + Y′
+            </div>
+            <p style="margin-top: 10px;"><strong>八字口訣：</strong>「斷開長線，改換符號」</p>
+            <ul style="margin-top: 8px;">
+              <li>總和的補數，等於補數的乘積。</li>
+              <li>乘積的補數，等於補數的總和。</li>
+            </ul>
+          </div>
+
+          <div class="highlight-box">
+            <strong>🌐 推廣至 <span class="math-expr">n</span> 個變數：</strong><br>
+            <span class="math-expr">(X₁ + X₂ + … + Xₙ)′ = X₁′ X₂′ … Xₙ′</span><br>
+            <span class="math-expr">(X₁ · X₂ · … · Xₙ)′ = X₁′ + X₂′ + … + Xₙ′</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card">
+            <h4>💡 生活實例：小明今天出不出門？</h4>
+            <p><strong>條件：</strong>「除非（外面出太陽 <strong>AND</strong> 小明有空），小明才出門。」</p>
+            <p style="margin-top: 8px;">那麼，<strong>什麼時候小明「不出門」？</strong></p>
+            <div class="highlight-box" style="background: rgba(192, 132, 252, 0.1); border-color: var(--accent-purple);">
+              <strong>(晴天 · 有空)′ = (沒出太陽) + (小明沒空)</strong><br>
+              → 只要「沒出太陽」<strong>或是</strong>「小明沒空」，小明就不會出門！
+            </div>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin-top: 8px;">
+              常人需要繞一大圈的大腦邏輯，套用狄摩根公式只需一秒轉化。
+            </p>
+          </div>
+
+          <div class="concept-card">
+            <h4>⚠️ 對偶式 (Dual) vs 補數 (Complement)</h4>
+            <p><strong>求對偶</strong>：AND 換 OR、OR 換 AND，<strong>變數本身不反相</strong>！</p>
+            <p style="margin-top: 6px;">例：<span class="math-expr">(AB′ + C)<sup>D</sup> = (A + B′)C</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/demorgan-laws]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02b.pdf (p.5, p.9)</div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Logic Gates Family -->
+    <div class="slide" data-slide="7">
+      <div class="slide-badge">Lesson 07 · 硬體實現</div>
+      <h1 class="slide-title">晶片裡的樂高：邏輯閘家族</h1>
+      <p class="slide-subtitle">從基本閘到萬能閘 (Universal Gates) 與算術核心 (XOR)。</p>
+
+      <div class="slide-body full">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+          
+          <div class="concept-card">
+            <h4>1. 基本閘 (Basic)</h4>
+            <p><strong>AND, OR, NOT</strong></p>
+            <ul style="font-size: 13.5px;">
+              <li>AND: 圓弧頭 D 型</li>
+              <li>OR: 尖頭弧形</li>
+              <li>NOT: 三角形前帶圓圈</li>
+            </ul>
+            <p style="margin-top: 6px; font-size: 13px; color: var(--accent);">最直觀，但製程成本不一定最低。</p>
+          </div>
+
+          <div class="concept-card" style="border-color: var(--accent-green);">
+            <h4 style="color: var(--accent-green);">2. 萬能閘 (Universal)</h4>
+            <p><strong>NAND / NOR 閘</strong></p>
+            <p style="font-size: 13px; line-height: 1.5; margin-top: 4px;">
+              <strong>工業界的奇蹟！</strong><br>
+              藉由狄摩根定律，工程師只要生產<strong>單一種 NAND 閘</strong>，就能搭出 NOT, AND, OR 等全套邏輯！大幅降低光罩與晶圓成本。
+            </p>
+          </div>
+
+          <div class="concept-card" style="border-color: var(--accent-purple);">
+            <h4 style="color: var(--accent-purple);">3. 算術核心 (Arithmetic)</h4>
+            <p><strong>XOR (互斥或)</strong></p>
+            <div class="math-formula" style="font-size: 13.5px; padding: 4px 8px;">
+              A ⊕ B = A′B + AB′
+            </div>
+            <p style="font-size: 13px; line-height: 1.5; margin-top: 4px;">
+              <strong>相異為 1，相同為 0！</strong><br>
+              CPU 加法器（Adder）做二進位相加（<span class="math-expr">1 + 1 = 0</span>，進位 1）的絕對心臟！
+            </p>
+          </div>
+
+        </div>
+
+        <div class="highlight-box" style="margin-top: 14px;">
+          <strong>🎯 萬能閘小知識：</strong>快閃記憶體（SSD）之所以叫 <strong>NAND Flash</strong>，就是因為內部儲存單元陣列完全是由 NAND 邏輯閘拓撲結構組織而成！
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/logic-gates-and-circuits]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02c.pdf (p.10-p.11)</div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Circuit Synthesis (SOP) -->
+    <div class="slide" data-slide="8">
+      <div class="slide-badge">Lesson 08 · 設計實戰</div>
+      <h1 class="slide-title">電路設計實戰：SOP 積之和</h1>
+      <p class="slide-subtitle">如何把人類需求的「真值表」一鍵翻譯成真實的晶片線路？</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>📐 什麼是 SOP (Sum of Products)？</h4>
+            <p><strong>積之和</strong>：將所有乘積項 (AND) 透過最後的加法 (OR) 匯集起來。</p>
+            <div class="math-formula" style="display: block; margin: 8px 0; font-size: 16px;">
+              F = AB′ + CD′E + AC′E′
+            </div>
+            <p style="margin-top: 6px;">
+              <strong>兩階電路架構 (Two-level Circuit)</strong>：<br>
+              第一級：多個 AND 閘（各自產生乘積項）<br>
+              第二級：單個 OR 閘（匯總輸出）
+            </p>
+          </div>
+
+          <div class="highlight-box">
+            <strong>🛠️ 翻譯萬能公式（Minterm 最小項法）：</strong><br>
+            1. 看真值表中輸出為 <strong>1</strong> 的所有列。<br>
+            2. 若該列變數是 1 寫原形，是 0 寫補數（例：<span class="math-expr">A = 1, B = 0 → AB′</span>）。<br>
+            3. 將所有項用「<span class="math-expr">+</span>」連起來，晶片邏輯電路立刻誕生！
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card">
+            <h4>⚖️ SOP vs POS 對照</h4>
+            <table class="table-container">
+              <thead>
+                <tr>
+                  <th>特性</th>
+                  <th>SOP (積之和)</th>
+                  <th>POS (和之積)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>結構</td>
+                  <td>先 AND 後 OR</td>
+                  <td>先 OR 後 AND</td>
+                </tr>
+                <tr>
+                  <td>形態</td>
+                  <td><span class="math-expr">AB′ + C′D</span></td>
+                  <td><span class="math-expr">(A + B′)(C′ + D)</span></td>
+                </tr>
+                <tr>
+                  <td>硬體映射</td>
+                  <td>AND-OR 電路</td>
+                  <td>OR-AND 電路</td>
+                </tr>
+                <tr>
+                  <td>萬能閘實現</td>
+                  <td>天然對應 <strong>NAND-NAND</strong></td>
+                  <td>天然對應 <strong>NOR-NOR</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/canonical-forms-sop-pos]]</a>
+        </div>
+        <div>教材出處：sources/week1/20260910_SCLD_C02c.pdf (p.2, p.6-p.7)</div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Simplification -->
+    <div class="slide" data-slide="9">
+      <div class="slide-badge">Lesson 09 · 化簡神技</div>
+      <h1 class="slide-title">化簡的威力：省下數十億個電晶體</h1>
+      <p class="slide-subtitle">同樣的邏輯功能，為什麼有人需要 50 個閘，高手只要 10 個？</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>✂️ 核心化簡三大招</h4>
+            <ul>
+              <li><strong>合併項 (Combining)</strong>：<br>
+                <span class="math-expr">XY + XY′ = X</span> → 消去無關變數！<br>
+                例：<span class="math-expr">ABC′D′ + ABCD′ = ABD′</span>
+              </li>
+              <li style="margin-top: 6px;"><strong>消除項 (Eliminating)</strong>：<br>
+                吸收律：<span class="math-expr">X + XY = X</span><br>
+                共識定理：<span class="math-expr">XY + X′Z + YZ = XY + X′Z</span>
+              </li>
+              <li style="margin-top: 6px;"><strong>消除文字 (Literals)</strong>：<br>
+                <span class="math-expr">X + X′Y = X + Y</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="highlight-box">
+            <strong>💎 晶片經濟學：</strong>一個文字 (Literal) 大約消耗 2~4 個 MOSFET 電晶體。把 28 個文字化簡到 13 個文字，等於直接為晶片省下超過 <strong>50% 的矽晶圓面積與發熱量</strong>！
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card">
+            <h4>🌟 奇招：共識定理 (Consensus Theorem)</h4>
+            <div class="math-formula" style="display: block; margin: 8px 0; font-size: 16px;">
+              XY + X′Z + YZ = XY + X′Z
+            </div>
+            <p style="font-size: 14px; line-height: 1.6;">
+              當有一項含 <span class="math-expr">X</span>、另一項含 <span class="math-expr">X′</span>，將兩項剩餘變數相乘所得的 <span class="math-expr">YZ</span> 稱為<strong>共識項</strong>。
+            </p>
+            <p style="font-size: 14px; margin-top: 6px; color: var(--accent-green);">
+              <strong>因為前兩項已經默默在背後罩住了 YZ，所以它完全是多餘的，可以直接拔除！</strong>
+            </p>
+          </div>
+
+          <div class="concept-card" style="border-color: var(--accent-purple);">
+            <h4>逆向神操作：主動添加冗餘項</h4>
+            <p style="font-size: 13.5px;">有時公式看似無法化簡，故意加上一個共識項（以毒攻毒），反而能引爆連鎖吸收反應，得到更精簡的電路！</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/algebraic-simplification-techniques]]</a>, <a href="#">[[wiki/concepts/consensus-theorem]]</a>
+        </div>
+        <div>教材出處：sources/week2/20260917_SCLD_C03b.pdf (p.2-p.4)</div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Cancellation Trap -->
+    <div class="slide" data-slide="10">
+      <div class="slide-badge">Lesson 10 · 避坑指南</div>
+      <h1 class="slide-title">致命陷阱：千萬別用「消去律」！</h1>
+      <p class="slide-subtitle">普通代數習慣在此成了工程毒藥：為什麼 X + Y = X + Z 不能消掉 X？</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="warning-box">
+            <h4 style="color: var(--accent-red); margin-bottom: 6px;">❌ 陷阱一：加法消去律完全失效！</h4>
+            <p><strong>錯誤直覺</strong>：若 <span class="math-expr">X + Y = X + Z</span>，則 <span class="math-expr">Y = Z</span>？</p>
+            <p style="margin-top: 8px;"><strong>🚨 鐵證反例 (Counterexample)：</strong></p>
+            <p style="font-family: var(--font-math); font-size: 14.5px; margin-top: 4px; line-height: 1.6;">
+              令 <span class="math-expr">X = 1, Y = 0, Z = 1</span><br>
+              左式 = 1 + 0 = 1<br>
+              右式 = 1 + 1 = 1<br>
+              左式 = 右式（都是 1，等式成立！）<br>
+              但顯然：<strong><span class="math-expr">Y(0) ≠ Z(1)</span></strong>！
+            </p>
+          </div>
+
+          <div class="warning-box">
+            <h4 style="color: var(--accent-red); margin-bottom: 6px;">❌ 陷阱二：乘法消去律同樣失效！</h4>
+            <p><strong>錯誤直覺</strong>：若 <span class="math-expr">XY = XZ</span>，則 <span class="math-expr">Y = Z</span>？</p>
+            <p style="margin-top: 8px;"><strong>🚨 鐵證反例：</strong></p>
+            <p style="font-family: var(--font-math); font-size: 14.5px; margin-top: 4px; line-height: 1.6;">
+              令 <span class="math-expr">X = 0, Y = 0, Z = 1</span><br>
+              左式 = 0 · 0 = 0<br>
+              右式 = 0 · 1 = 0<br>
+              左式 = 右式成立，但 <strong><span class="math-expr">Y(0) ≠ Z(1)</span></strong>！
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card">
+            <h4>🛡️ 為什麼？背後的數學本質</h4>
+            <p>在布林代數中，加法與乘法是<strong>不可逆運算 (Non-reversible)</strong>，資訊在飽和運算（<span class="math-expr">1 + X = 1</span>, <span class="math-expr">0 · X = 0</span>）中被永久抹除了！</p>
+            <p style="margin-top: 10px;"><strong>✅ 唯一合法的雙邊操作：</strong></p>
+            <p>等式兩側可以同時取補數（<span class="math-expr">F′ = G′ ⟺ F = G</span>），因為補數具備嚴格的雙向一對一對應性。</p>
+          </div>
+
+          <div class="highlight-box">
+            <strong>🎓 考試與面試防身法寶：</strong><br>
+            若要證明兩個邏輯式不等，不要死算！只要在草稿紙上試代 0 與 1，抓出一個讓左右不相等的反例，即可立刻判定等式無效！
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 來源引用:</span>
+          <a href="#">[[wiki/concepts/equation-validity-and-cancellation-trap]]</a>
+        </div>
+        <div>教材出處：sources/week2/20260917_SCLD_C03b.pdf (p.11-p.12)</div>
+      </div>
+    </div>
+
+    <!-- Slide 11: Summary -->
+    <div class="slide" data-slide="11">
+      <div class="slide-badge">Lesson 11 · 結語與延伸</div>
+      <h1 class="slide-title">通往 CPU 算術邏輯單元</h1>
+      <p class="slide-subtitle">恭喜你！你已經掌握了構建整個數位世界的底層代數語言。</p>
+
+      <div class="slide-body split">
+        <div>
+          <div class="concept-card">
+            <h4>🏆 本堂課關鍵收穫總回顧</h4>
+            <ul>
+              <li><strong>心智模型</strong>：布林 0/1 是開關與電壓狀態，而非數值大小。</li>
+              <li><strong>核心操作</strong>：NOT（反相）、AND（串聯）、OR（並聯）。</li>
+              <li><strong>重要定律</strong>：第二分配律 <span class="math-expr">X + YZ = (X + Y)(X + Z)</span> 與狄摩根「斷長線變符號」。</li>
+              <li><strong>硬體組裝</strong>：SOP（積之和）天然對應 AND-OR 與 NAND-NAND 兩階電路。</li>
+              <li><strong>避坑禁區</strong>：永遠別在布林代數中套用消去律！</li>
+            </ul>
+          </div>
+
+          <div class="highlight-box">
+            <strong>🤖 知識庫持續複利提醒：</strong><br>
+            本簡報所有內容均來自 LLM Wiki 持久知識庫。隨著後續章節（卡諾圖 K-Map、多工器 MUX、解碼器 Decoder）的加入，Wiki 將自動持續增量演化！
+          </div>
+        </div>
+
+        <div>
+          <div class="concept-card" style="border-color: var(--accent);">
+            <h4>🚀 下一步：打造你自己的 CPU</h4>
+            <p style="font-size: 14px; line-height: 1.6;">
+              有了今天的基礎，你就能將 XOR 閘與 AND 閘結合，組裝出能算 <span class="math-expr">1 + 1 = 2</span> 的<strong>半加法器 (Half-Adder)</strong>。<br>
+              將 64 個加法器串起來，就誕生了 Intel、Apple M 系列與 Nvidia GPU 最核心的<strong>算術邏輯單元 (ALU)</strong>！
+            </p>
+            <div style="text-align: center; margin-top: 20px;">
+              <button class="btn" style="margin: 0 auto; padding: 10px 24px; font-size: 15px; border-color: var(--accent); color: var(--accent);" onclick="goToSlide(1)">
+                🔄 重新回顧簡報
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <div class="wiki-citation">
+          <span>📚 Wiki 知識庫總目錄:</span>
+          <a href="#">[[wiki/index]]</a>
+        </div>
+        <div>專案名稱：w10_wikiLLM · 完成於 2026-11-23</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Bar Navigation -->
+  <div class="bottom-bar">
+    <button class="btn" onclick="prevSlide()" title="上一頁 (← / P)">◀ 上一頁</button>
+    <div class="counter-display">
+      <span class="current" id="currentSlideNum">01</span> / <span id="totalSlidesNum">11</span>
+    </div>
+    <button class="btn" onclick="nextSlide()" title="下一頁 (→ / N / 空白鍵)">下一頁 ▶</button>
+  </div>
+
+  <!-- Speaker Notes Drawer -->
+  <div class="notes-drawer" id="notesDrawer">
+    <h3>
+      <span>🎙️ 講師備忘錄與授課指引 (Speaker Notes)</span>
+      <span style="font-size: 12px; cursor: pointer; color: var(--text-muted);" onclick="toggleNotes()">[收起關閉 (S)]</span>
+    </h3>
+    <p id="notesContent">載入中...</p>
+  </div>
+
+  <!-- Overview Modal -->
+  <div class="overview-modal" id="overviewModal">
+    <div class="overview-header">
+      <h2>📑 簡報全覽導覽 (點擊跳轉)</h2>
+      <button class="btn" onclick="toggleOverview()">✕ 關閉 (ESC)</button>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+
+  <!-- Keyboard Shortcuts Hint -->
+  <div class="shortcuts-hint">
+    鍵盤快捷鍵：← → 翻頁 | S 講者筆記 | O 全覽 | F 全螢幕 | ESC 關閉視窗
+  </div>
+
+  <script>
+    // State
+    let currentSlide = 1;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    
+    // Speaker notes data
+    const speakerNotes = {
+      1: "【授課重點】破題開場。先引發聽眾的好奇心：現代手機晶片如此強大，但為何骨子裡只有 0 與 1？不要一開始丟公式，先強調布林代數是矽晶片的通用底層語言。",
+      2: "【授課重點】建立物理心智模型。開關代數最初是描述開關的通斷。引導學員動手點擊右側的模擬器，體會串聯（AND）的物理直覺：兩個開關都要閉合，燈泡才會發亮。",
+      3: "【授課重點】歷史故事調劑。介紹布爾與夏農兩位巨人的跨時空交集。特別點出夏農在 22 歲讀碩士時寫下這篇論文，鼓勵大家不要小看簡單的想法。",
+      4: "【授課重點】講授 NOT, AND, OR 三大基石。解釋真值表的概念：2 的 n 次方列。說明 Literal（文字）在硬體中的實際物理意義，文字越少代表電路輸入腳位越少。",
+      5: "【授課重點】顛覆常識！重點講解 1 + 1 = 1，並介紹布林代數特有的第二分配律 X + YZ = (X+Y)(X+Z)。現場推導一次證明給學生看，打消大家對第二分配律的疑慮。",
+      6: "【授課重點】狄摩根定律。傳授八字口訣「斷開長線，變換符號」。舉生活中小明出門的例子讓大家會心一笑，強化生活直覺理解。",
+      7: "【授課重點】從數學公式落地到硬體。介紹萬能閘 NAND 和 NOR，強調 SSD（NAND Flash）的名字由來；介紹 XOR 閘的相異為 1 特徵，預告它是下節課加法器的核心。",
+      8: "【授課重點】展示 SOP（積之和）如何把人類列出的真值表直接翻譯成 AND-OR 兩階硬體電路。對比 POS 和之積的互補特性。",
+      9: "【授課重點】晶片經濟學。說明化簡的重要性：省一個閘就能為晶片省下大量矽晶圓面積與功耗。介紹共識定理如何巧妙拔除隱藏冗餘項。",
+      10: "【授課重點】避坑環節！千萬要強調布林代數中「消去律完全無效」。用投影片上的兩組 0 與 1 反例親自代一次，讓學生深刻記住代數直覺的盲區。",
+      11: "【授課重點】總結收尾。回顧今天的完整脈絡（物理開關 -> 代數公理 -> 邏輯閘 -> 兩階電路），預告未來如何用 XOR 組裝 CPU ALU。介紹 LLM Wiki 知識庫的沉澱架構。"
+    };
+
+    // Initialize
+    document.getElementById('totalSlidesNum').innerText = String(totalSlides).padStart(2, '0');
+    updateSlideView();
+    buildOverviewGrid();
+    initMath();
+
+    function updateSlideView() {
+      slides.forEach((s, idx) => {
+        if (idx + 1 === currentSlide) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+
+      // Update counters & progress
+      document.getElementById('currentSlideNum').innerText = String(currentSlide).padStart(2, '0');
+      const progressPercent = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+      document.getElementById('progressBar').style.width = `${progressPercent}%`;
+
+      // Update speaker note
+      document.getElementById('notesContent').innerText = speakerNotes[currentSlide] || "暫無特別講者備忘。";
+
+      // Update overview active highlight
+      document.querySelectorAll('.overview-thumb').forEach((t, i) => {
+        if (i + 1 === currentSlide) {
+          t.classList.add('active');
+        } else {
+          t.classList.remove('active');
+        }
+      });
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlideView();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlideView();
+      }
+    }
+
+    function goToSlide(n) {
+      if (n >= 1 && n <= totalSlides) {
+        currentSlide = n;
+        updateSlideView();
+        closeModals();
+      }
+    }
+
+    // Interactive Switch Simulator
+    let stateA = 0;
+    let stateB = 0;
+
+    function toggleSimSwitch(sw) {
+      if (sw === 'A') {
+        stateA = stateA === 0 ? 1 : 0;
+        const btn = document.getElementById('swA');
+        btn.innerText = `開關 A: ${stateA} (${stateA ? '閉合通路' : '斷開'})`;
+        btn.classList.toggle('on', stateA === 1);
+      } else {
+        stateB = stateB === 0 ? 1 : 0;
+        const btn = document.getElementById('swB');
+        btn.innerText = `開關 B: ${stateB} (${stateB ? '閉合通路' : '斷開'})`;
+        btn.classList.toggle('on', stateB === 1);
+      }
+
+      // AND Logic
+      const output = stateA && stateB;
+      const bulb = document.getElementById('simBulb');
+      const status = document.getElementById('simStatus');
+
+      if (output === 1) {
+        bulb.classList.add('lit');
+        status.innerText = "輸出電路狀態: 1 (發亮通電! ✨)";
+        status.style.color = "var(--accent-green)";
+      } else {
+        bulb.classList.remove('lit');
+        status.innerText = "輸出電路狀態: 0 (熄滅斷路)";
+        status.style.color = "var(--accent-red)";
+      }
+    }
+
+    // Toggle Modals & Helpers
+    function toggleNotes() {
+      document.getElementById('notesDrawer').classList.toggle('open');
+    }
+
+    function toggleOverview() {
+      document.getElementById('overviewModal').classList.toggle('open');
+    }
+
+    function closeModals() {
+      document.getElementById('overviewModal').classList.remove('open');
+      document.getElementById('notesDrawer').classList.remove('open');
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const current = body.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      body.setAttribute('data-theme', next);
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    function buildOverviewGrid() {
+      const grid = document.getElementById('overviewGrid');
+      grid.innerHTML = '';
+      slides.forEach((s, i) => {
+        const title = s.querySelector('.slide-title').innerText;
+        const badge = s.querySelector('.slide-badge').innerText;
+        const thumb = document.createElement('div');
+        thumb.className = `overview-thumb ${i + 1 === currentSlide ? 'active' : ''}`;
+        thumb.onclick = () => goToSlide(i + 1);
+        thumb.innerHTML = `
+          <div class="thumb-num">SLIDE ${String(i + 1).padStart(2, '0')} · ${badge}</div>
+          <div class="thumb-title">${title}</div>
+        `;
+        grid.appendChild(thumb);
+      });
+    }
+
+    // KaTeX auto-render initializer with graceful fallback
+    function initMath() {
+      if (window.renderMathInElement) {
+        try {
+          renderMathInElement(document.body, {
+            delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError: false
+          });
+        } catch(e) {
+          console.log("KaTeX render notice:", e);
+        }
+      }
+    }
+
+    window.addEventListener('load', () => {
+      initMath();
+    });
+
+    // Keyboard Event Listener
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'n' || e.key === 'N') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'p' || e.key === 'P') {
+        prevSlide();
+      } else if (e.key === 's' || e.key === 'S') {
+        toggleNotes();
+      } else if (e.key === 'o' || e.key === 'O') {
+        toggleOverview();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Escape') {
+        closeModals();
+      }
+    });
+  </script>
+</body>
+</html>
